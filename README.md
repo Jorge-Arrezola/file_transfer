@@ -1,5 +1,5 @@
-TCP PING
+FILE TRANSFER
 =======
 
-Pequeño programa que efectua un Ping a nivel de TCP entre dos equipos.
+Pequeño programa que efectua un file transfer entre un servidor y un cliente
 
