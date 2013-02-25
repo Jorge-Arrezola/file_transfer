@@ -1,0 +1,151 @@
+/**
+  @file server.c
+
+  @author Alvaro Parres
+  @date Feb/2013
+
+*/
+
+#include <sys/types.h>
+#include <strings.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+
+#include "netlib/tcp.h"
+#include "utils/debug.h"
+#include "defaults.h"
+#include <pthread.h> //librería para hilos
+/* DUDAS:
+linea 56 marca error
+cómo mostrar los debugs
+cómo saber si el archivo se pasó correctamente
+¿Se debe escribir la ubicación entera del archivo o sólo el archivo si estoy ejecutando desde el mismo
+directorio?
+*/
+
+
+int startProtocolFork(int clientSocket);
+int clientes = 0;
+
+	int serverSocket;
+	int clientSocket;
+	
+	char clientIP[18];
+	u_int clientPort;
+	pid_t forkID; //es un int
+
+	int file;
+	
+	int localerror;
+
+	int readBytes = 0;
+	int totalReadBytes = 0;	
+	int totalWriteBytes = 0;
+	int writeBytes = 0;
+	char *readBuffer = NULL;
+
+int start_server(const char iface[], const u_short port, const u_short maxClients, const char *filename) {
+
+	
+	serverSocket = newTCPServerSocket4(iface,port,maxClients);
+	
+	if(serverSocket == -1) {
+		return false;
+	}
+
+	
+	if((file = open(filename,O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1) {
+		localerror = errno;
+		//fprintf(stderr,"Can't open file for write (%s)\n",strerror(localerror));
+		//fprintf("Can't open file for write \n");
+				
+		return false;
+	}
+	
+	bzero(clientIP,sizeof(clientIP));
+	clientPort = 0;
+	while(true){
+		
+	debug(5,"%s","Waiting for a Client...");
+	clientSocket = waitConnection4(serverSocket,clientIP,&clientPort);
+	clientes++;
+	debug(4,"Tenemos en linea %i clientes\n",clientes);		
+	debug(4,"Connected Client %s:%u",clientIP,clientPort);
+
+	readBuffer = (char *) calloc(1,BUFFERSIZE);
+
+	forkID = fork(); //////////////START FORK
+		
+		if(forkID == -1) {
+			fprintf(stderr,"Cant Fork\n");
+		} else if(forkID == 0) {
+			//Soy el HIJO
+			closeTCPSocket(serverSocket);
+			startProtocolFork(clientSocket);
+			clientes--;
+			closeTCPSocket(clientSocket);
+			return 0;
+		} else {
+		//	//SOY EL PADRE
+			closeTCPSocket(clientSocket);
+		} /////////////////////FIN FORK
+	
+
+/*	while((readBytes = read(clientSocket,readBuffer,BUFFERSIZE)) > 0) {
+		debug(5,"\tSe leyeron de %s:%u %u bytes",clientIP,clientPort,readBytes);
+		totalWriteBytes = 0;
+		while(totalWriteBytes < readBytes) {
+			writeBytes = write(file,readBuffer+totalWriteBytes,readBytes-totalWriteBytes);
+			totalWriteBytes += writeBytes;
+		}
+		totalReadBytes += readBytes;
+	}	
+
+	debug(3,"\t Se leyeron un total de %i de bytes\n",totalReadBytes);
+	
+	free(readBuffer);	
+	close(file); */
+	
+	//closeTCPSocket(clientSocket);
+	//debug(4,"Close connection (%s:%u)",clientIP,clientPort);
+
+	//closeTCPSocket(serverSocket);	
+	
+	} //fin de while(true)
+	return true;
+	
+}
+
+
+int startProtocolFork(int clientSocket) {
+	/*int i;
+	char mensaje[200]="";
+	
+	for(i=0; i<10; i++) {
+		sprintf(mensaje,"Este es el mensaje #%i\n",i+1);
+		write(clientSocket,mensaje,sizeof(mensaje));
+		sleep(1);
+	}*/
+
+while((readBytes = read(clientSocket,readBuffer,BUFFERSIZE)) > 0) {
+		debug(5,"\tSe leyeron de %s:%u %u bytes",clientIP,clientPort,readBytes);
+		totalWriteBytes = 0;
+		while(totalWriteBytes < readBytes) {
+			writeBytes = write(file,readBuffer+totalWriteBytes,readBytes-totalWriteBytes);
+			totalWriteBytes += writeBytes;
+		}
+		totalReadBytes += readBytes;
+	}	
+
+	debug(3,"\t Se leyeron un total de %i de bytes\n",totalReadBytes);
+	
+	free(readBuffer);	
+	close(file);
+	return 0;
+
+}
