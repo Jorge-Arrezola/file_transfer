@@ -1,11 +1,11 @@
 /**
   @file server.c
 
-  @author Alvaro Parres
+  @author Jorge Arrezola, Mauricio Gonzalez
   @date Feb/2013
 
 */
-
+///File transfer con servidor multicliente utilizando hilos.
 #include <sys/types.h>
 #include <strings.h>
 #include <stdio.h>
@@ -20,14 +20,6 @@
 #include "utils/debug.h"
 #include "defaults.h"
 #include <pthread.h> //librería para hilos
-/* DUDAS:
-linea 56 marca error
-cómo mostrar los debugs
-cómo saber si el archivo se pasó correctamente
-¿Se debe escribir la ubicación entera del archivo o sólo el archivo si estoy ejecutando desde el mismo
-directorio?
-*/
-
 
 int startProtocolFork(int clientSocket);
 int clientes = 0;
@@ -58,6 +50,7 @@ int start_server(const char iface[], const u_short port, const u_short maxClient
 		return false;
 	}
 
+	//while(true){
 	
 	if((file = open(filename,O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1) {
 		localerror = errno;
@@ -96,42 +89,13 @@ int start_server(const char iface[], const u_short port, const u_short maxClient
 		} /////////////////////FIN FORK
 	
 
-/*	while((readBytes = read(clientSocket,readBuffer,BUFFERSIZE)) > 0) {
-		debug(5,"\tSe leyeron de %s:%u %u bytes",clientIP,clientPort,readBytes);
-		totalWriteBytes = 0;
-		while(totalWriteBytes < readBytes) {
-			writeBytes = write(file,readBuffer+totalWriteBytes,readBytes-totalWriteBytes);
-			totalWriteBytes += writeBytes;
-		}
-		totalReadBytes += readBytes;
-	}	
-
-	debug(3,"\t Se leyeron un total de %i de bytes\n",totalReadBytes);
-	
-	free(readBuffer);	
-	close(file); */
-	
-	//closeTCPSocket(clientSocket);
-	//debug(4,"Close connection (%s:%u)",clientIP,clientPort);
-
-	//closeTCPSocket(serverSocket);	
-	
 	} //fin de while(true)
 	return true;
 	
 }
 
-
 int startProtocolFork(int clientSocket) {
-	/*int i;
-	char mensaje[200]="";
 	
-	for(i=0; i<10; i++) {
-		sprintf(mensaje,"Este es el mensaje #%i\n",i+1);
-		write(clientSocket,mensaje,sizeof(mensaje));
-		sleep(1);
-	}*/
-
 while((readBytes = read(clientSocket,readBuffer,BUFFERSIZE)) > 0) {
 		debug(5,"\tSe leyeron de %s:%u %u bytes",clientIP,clientPort,readBytes);
 		totalWriteBytes = 0;

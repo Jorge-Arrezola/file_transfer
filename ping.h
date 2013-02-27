@@ -1,14 +1,26 @@
 /**
+  @file main.c
+  @brief Codigo Main del Software
+
   @author Alvaro Parres
-  @date Feb/2013
+  @date 01/2013
 
 */
 
-#ifndef PING_H
-#define PING_H 
 
-#include <sys/types.h>
-int PingListen(int clientSocket, const char *clientIP, const u_int clientPort);
-int pingSend(int clientSocket, u_int msg_size);
+/**
+   @brief Función Main del software.
+   
+   Función Main del Software.
+   
+   @param argc Cantidad de Argumentos recividos.
+   @param argv[] Arreglo de Strings con el valor de los argumentos.
 
-#endif
+   @returns Regresa siempre 1 al terminar de correr el programa.
+*/
+
+#include "file_transfer.h"
+
+int main(int argc, char *argv[]) {
+	return start(argc, argv);
+}
